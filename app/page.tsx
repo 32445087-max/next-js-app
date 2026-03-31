@@ -136,14 +136,21 @@ import JobFilterClient from "@/src/components/Home/JobFilterClient";
 import type { Job } from "@/src/types/job";
 
 const Home = async () => {
-  const res = await fetch("/api/jobs", {
-    cache: "no-store",
-  });
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/jobs?select=*`,
+    {
+      headers: {
+        apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
+      },
+      cache: "no-store",
+    }
+  );
+
   const jobs: Job[] = await res.json();
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
-      {/* <Header /> */}
       <JobFilterClient jobs={jobs} />
     </div>
   );
