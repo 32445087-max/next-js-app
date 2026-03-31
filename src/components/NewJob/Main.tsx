@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/src/lib/supabase";
+// import { supabase } from "@/src/lib/supabase";
 // import { useNavigate } from "react-router-dom";
 // import type{ Job } from "../../App";
 
@@ -24,12 +24,12 @@ const Submit = async () => {
     return;
   }
 
-  const { error } = await supabase.from("jobs").insert([
-    { title, category, salary }
-  ]);
+  const res = await fetch("/api/jobs", {
+    method: "POST",
+    body: JSON.stringify({ title, category, salary }),
+  });
 
-  if (error) {
-    console.error(error);
+  if (!res.ok) {
     alert("エラー");
     return;
   }
