@@ -136,7 +136,7 @@ import JobFilterClient from "@/src/components/Home/JobFilterClient";
 import type { Job } from "@/src/types/job";
 
 const Home = async () => {
-  const res = await fetch("http://localhost:3000/api/jobs", {
+  const res = await fetch("/api/jobs", {
     cache: "no-store",
   });
   const jobs: Job[] = await res.json();
