@@ -1,65 +1,110 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+import Header from "@/src/components/Header";
+import Listing from "@/src/components/Home/Listing";
+import JobFilter from "@/src/components/Home/JobFilter";
+import type { Job } from "@/src/types/job";
+import { useState } from "react";
+
+// バックエンド
+import { useEffect } from "react";
+
+// コンポーネントごとにPropsで受け取る中身が異なるから、Propsの型もそれぞれ違う。
+// exportしなければ、そのファイル内だけで使われる型だから混ざらない。
+// type Props = {
+//     contentsJobs:Job[];
+// }
+
+const Home = () => {
+// const Home = () => {
+    // 下returnまで
+      // const jobs = props.contentsJobs;
+      const [jobs, setJobs] = useState<Job[]>([]);
+      useEffect(() => {
+        fetch("https://job-api-ryk6.onrender.com/jobs")
+        .then(res => res.json())
+        .then(data => setJobs(data))
+        .catch(err => console.error(err));
+      }, []);
+
+    const [selectedCategory, setSelectedCategory] = useState<string[]>([]);
+    const [minSalary, setMinSalary] = useState(0);
+    const [showModal, setShowModal] = useState(false);
+    const [keyword, setKeyword] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+
+
+    const filteredJobs = jobs.filter((job) =>
+    (selectedCategory.length === 0 ||
+        selectedCategory.includes(job.category)) &&
+    job.salary >= minSalary &&
+    (job.title ?? "").toLowerCase().includes(keyword.toLowerCase())
   );
-}
+  const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
+
+
+  const start = (currentPage - 1) * itemsPerPage;
+  const paginatedJobs = filteredJobs.slice(start, start + itemsPerPage);
+    return(
+        <div className="min-h-screen bg-gray-100 flex flex-col">
+          <Header setShowModal={setShowModal} />
+          {showModal && (
+      <div className="w-full flex px-6 items-start">
+        <div className="bg-white p-6 rounded shadow">
+          <input
+            type="text"
+            placeholder="キーワード入力"
+            onChange={(e) => {
+              setKeyword(e.target.value);
+              setCurrentPage(1);
+            }}
+          />
+          <button onClick={() => setShowModal(false)}>検索</button>
+        </div>
+      </div>
+    )}
+    <div className="flex-1 flex w-full">
+      <div className="w-64 bg-gray-200 p-6">
+        <JobFilter
+        setSelectedCategory={setSelectedCategory}
+        setMinSalary={setMinSalary}
+        setKeyword={setKeyword}
+        setCurrentPage={setCurrentPage}
+        />
+      </div>
+      <div className="flex-1 bg-white p-6">
+      <h2 className="text-xl font-bold mb-2">求人一覧</h2>
+      <p className="text-sm text-gray-500 mb-4">該当件数：{filteredJobs.length}件</p>
+      <Listing jobs={paginatedJobs}/>
+              {filteredJobs.length > 0 && (
+          <div className="flex justify-center">
+            <button
+            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            >
+              ← 前へ
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => (
+                <button key={i} onClick={() => setCurrentPage(i + 1)}>
+                  {i + 1}
+                  </button>
+                ))}
+                <button
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                >
+                  次へ →
+                  </button>
+                  </div>
+                )}
+                </div>
+                </div>
+                </div>
+                );
+                }
+
+
+
+
+export default Home;
