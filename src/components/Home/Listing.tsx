@@ -1,6 +1,4 @@
-
-import type{ Job } from "../../App";
-
+import { Job } from "@/src/types/job";
 
 type Props = {
   jobs: Job[];
