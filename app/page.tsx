@@ -5,6 +5,7 @@ import Listing from "@/src/components/Home/Listing";
 import JobFilter from "@/src/components/Home/JobFilter";
 import type { Job } from "@/src/types/job";
 import { useState } from "react";
+import { supabase } from "@/src/lib/supabase";
 
 // バックエンド
 import { useEffect } from "react";
@@ -20,12 +21,23 @@ const Home = () => {
     // 下returnまで
       // const jobs = props.contentsJobs;
       const [jobs, setJobs] = useState<Job[]>([]);
+
       useEffect(() => {
-        fetch("https://job-api-ryk6.onrender.com/jobs")
-        .then(res => res.json())
-        .then(data => setJobs(data))
-        .catch(err => console.error(err));
-      }, []);
+  const getJobs = async () => {
+    const { data, error } = await supabase
+      .from("jobs")
+      .select("*");
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    setJobs(data || []);
+  };
+
+  getJobs();
+}, []);
 
     const [selectedCategory, setSelectedCategory] = useState<string[]>([]);
     const [minSalary, setMinSalary] = useState(0);

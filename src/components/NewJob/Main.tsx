@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { supabase } from "@/src/lib/supabase";
 // import { useNavigate } from "react-router-dom";
 // import type{ Job } from "../../App";
 
@@ -17,24 +18,25 @@ const Main = () =>{
     const [salary,setSalary] = useState(0);
     const [title,setTitle] = useState("");
 
-    const Submit = () => {
-        if (!title || !category || salary <= 0) {
-            alert("全部入力して");
-            return;
-        }
-        fetch("https://job-api-ryk6.onrender.com/jobs", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-           body: JSON.stringify({
-            title, category, salary
-        })
-            })
-        .then(() => {
-            alert("投稿しました");
-            window.location.href = "/";
-        });
+const Submit = async () => {
+  if (!title || !category || salary <= 0) {
+    alert("全部入力して");
+    return;
+  }
+
+  const { error } = await supabase.from("jobs").insert([
+    { title, category, salary }
+  ]);
+
+  if (error) {
+    console.error(error);
+    alert("エラー");
+    return;
+  }
+
+  alert("投稿しました");
+  window.location.href = "/";
+};
         // const newJob: Job ={
         //     id:Date.now(),
         //     // Dateは、現在の日時を取得するための関数。
@@ -44,9 +46,6 @@ const Main = () =>{
         // };
 
         // setJobs(prev => [...prev,newJob]);
-
-
-    }
 
     return (
     <>
