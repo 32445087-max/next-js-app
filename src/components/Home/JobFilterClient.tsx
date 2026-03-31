@@ -1,0 +1,97 @@
+"use client";
+
+import Header from "../Header";
+import Listing from "./Listing";
+import JobFilter from "./JobFilter";
+import type { Job } from "@/src/types/job";
+import { useState } from "react";
+
+type Props = {
+  jobs: Job[];
+};
+
+const JobFilterClient = ({ jobs }: Props) => {
+  const [selectedCategory, setSelectedCategory] = useState<string[]>([]);
+  const [minSalary, setMinSalary] = useState(0);
+  const [keyword, setKeyword] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showModal, setShowModal] = useState(false);
+  const itemsPerPage = 5;
+
+  const filteredJobs = jobs.filter((job) =>
+    (selectedCategory.length === 0 ||
+      selectedCategory.includes(job.category)) &&
+    job.salary >= minSalary &&
+    (job.title ?? "").toLowerCase().includes(keyword.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
+  const start = (currentPage - 1) * itemsPerPage;
+  const paginatedJobs = filteredJobs.slice(start, start + itemsPerPage);
+
+  return (
+    <>
+    <Header setShowModal={setShowModal} />
+    {showModal && (
+  <div className="w-full flex px-6 items-start">
+    <div className="bg-white p-6 rounded shadow">
+      <input
+        type="text"
+        placeholder="キーワード入力"
+        onChange={(e) => {
+          setKeyword(e.target.value);
+          setCurrentPage(1);
+        }}
+      />
+      <button onClick={() => setShowModal(false)}>検索</button>
+    </div>
+  </div>
+)}
+    <div className="flex-1 flex w-full">
+      <div className="w-64 bg-gray-200 p-6">
+        <JobFilter
+          setSelectedCategory={setSelectedCategory}
+          setMinSalary={setMinSalary}
+          setKeyword={setKeyword}
+          setCurrentPage={setCurrentPage}
+        />
+      </div>
+
+      <div className="flex-1 bg-white p-6">
+        <h2 className="text-xl font-bold mb-2">求人一覧</h2>
+        <p className="text-sm text-gray-500 mb-4">
+          該当件数：{filteredJobs.length}件
+        </p>
+
+        <Listing jobs={paginatedJobs} />
+
+        {filteredJobs.length > 0 && (
+          <div className="flex justify-center">
+            <button
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              ← 前へ
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button key={i} onClick={() => setCurrentPage(i + 1)}>
+                {i + 1}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              次へ →
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+    </>
+  );
+};
+
+export default JobFilterClient;
